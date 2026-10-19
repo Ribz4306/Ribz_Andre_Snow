@@ -33,6 +33,10 @@ body {
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 .pagina { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.topo { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.ilustracao { width: 96px; height: 96px; flex: none; }
+.icone { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.dimensao-titulo, .dim-nome { display: flex; align-items: center; gap: 8px; }
 h1 { font-size: 2rem; font-weight: 700; margin: 0; line-height: 1.2; text-wrap: balance; }
 .barra { width: 120px; height: 6px; border-radius: 3px; background: var(--destaque); margin-top: 12px; }
 .intro { color: var(--sobre-azul); margin: 16px 0 0; max-width: 62ch; }
@@ -133,7 +137,17 @@ button.claro { background: var(--sobre-azul); }
 <body>
 <main class="pagina">
   <header>
-    <h1>Diagnóstico Digital PME</h1>
+    <div class="topo">
+      <h1>Diagnóstico Digital PME</h1>
+      <!-- Ilustração do cabeçalho: painel com barras a subir, em SVG para não depender de ficheiros externos -->
+      <svg class="ilustracao" viewBox="0 0 96 96" role="img" aria-label="Painel com barras a subir">
+        <rect x="6" y="10" width="84" height="64" rx="8" fill="none" stroke="#E2EEFF" stroke-width="3"/>
+        <rect x="20" y="46" width="12" height="16" rx="2" fill="#4D85C2"/>
+        <rect x="42" y="34" width="12" height="28" rx="2" fill="#E2EEFF"/>
+        <rect x="64" y="22" width="12" height="40" rx="2" fill="#74D1EF"/>
+        <path d="M36 86h24M48 74v12" stroke="#E2EEFF" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </div>
     <div class="barra"></div>
     <p class="intro">Responde a 12 perguntas sobre a tua empresa e recebe uma pontuação de maturidade digital com recomendações por onde começar. Feito para gerentes e equipas de pequenas e médias empresas.</p>
     <p class="aviso">As respostas abaixo são um exemplo. Altera-as para refletir a tua empresa. Nada sai do teu navegador.</p>
@@ -192,12 +206,22 @@ button.claro { background: var(--sobre-azul); }
 
 <script>
 /* ---------- Dados: dimensões, perguntas e recomendações ---------- */
+// "icone" guarda o desenho SVG (24x24) de cada área, para o reconhecer de relance
 const DIMENSOES = [
-  { id: 'presenca', nome: 'Presença online' },
-  { id: 'processos', nome: 'Processos e ferramentas' },
-  { id: 'dados', nome: 'Dados e decisão' },
-  { id: 'pessoas', nome: 'Pessoas e segurança' }
+  { id: 'presenca', nome: 'Presença online',
+    icone: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>' },
+  { id: 'processos', nome: 'Processos e ferramentas',
+    icone: '<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>' },
+  { id: 'dados', nome: 'Dados e decisão',
+    icone: '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>' },
+  { id: 'pessoas', nome: 'Pessoas e segurança',
+    icone: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>' }
 ];
+
+// Devolve o SVG da área; a cor vem do texto à volta (currentColor)
+function icone(id) {
+  return `<svg class="icone" viewBox="0 0 24 24" aria-hidden="true">${DIMENSOES.find(d => d.id === id).icone}</svg>`;
+}
 
 // Cada pergunta tem 4 opções, da menos madura (0 pontos) à mais madura (3 pontos)
 const PERGUNTAS = [
@@ -287,7 +311,7 @@ function desenharQuiz() {
   PERGUNTAS.forEach((p, i) => {
     if (p.dim !== dimAtual) {
       dimAtual = p.dim;
-      html += `<div class="dimensao-titulo">${DIMENSOES.find(d => d.id === dimAtual).nome}</div>`;
+      html += `<div class="dimensao-titulo">${icone(dimAtual)}${DIMENSOES.find(d => d.id === dimAtual).nome}</div>`;
     }
     html += `<fieldset><legend>${i + 1}. ${p.texto}</legend><div class="opcoes">`;
     p.op.forEach((txt, k) => {
@@ -317,14 +341,14 @@ function desenharResultado() {
     : 'Todas as perguntas respondidas.';
 
   document.getElementById('dims').innerHTML = dims.map(d =>
-    `<div class="dim-linha"><span>${d.nome}</span><b>${d.pct}%</b><div class="pista"><i style="width:${d.pct}%"></i></div></div>`
+    `<div class="dim-linha"><span class="dim-nome">${icone(d.id)}${d.nome}</span><b>${d.pct}%</b><div class="pista"><i style="width:${d.pct}%"></i></div></div>`
   ).join('');
 
   const ordenadas = dims.slice().sort((a, b) => a.pct - b.pct);
   const prioridades = ['Prioridade alta', 'Prioridade média', 'Prioridade média', 'Manter e melhorar'];
   const classes = ['', 'media', 'media', 'baixa'];
   document.getElementById('recs').innerHTML = ordenadas.map((d, i) =>
-    `<article class="rec"><span class="etiqueta ${classes[i]}">${prioridades[i]}</span><h3>${d.nome} · ${d.pct}%</h3><p>${RECOMENDACOES[d.id][nivelDim(d.pct)]}</p></article>`
+    `<article class="rec"><span class="etiqueta ${classes[i]}">${prioridades[i]}</span><h3 class="dim-nome">${icone(d.id)}${d.nome} · ${d.pct}%</h3><p>${RECOMENDACOES[d.id][nivelDim(d.pct)]}</p></article>`
   ).join('');
 
   desenharDetalhes();
