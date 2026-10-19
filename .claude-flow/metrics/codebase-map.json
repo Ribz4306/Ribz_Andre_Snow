@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-10-19T17:46:48.118Z",
+  "projectRoot": "/home/andreneves/Documentos/Projects/JunitecMiniApp",
+  "structure": {
+    "hasPackageJson": false,
+    "hasTsConfig": false,
+    "hasClaudeConfig": true,
+    "hasClaudeFlow": true
+  },
+  "scannedAt": 1792432008118
+}
