@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Diagnóstico Digital PME</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Paleta JUNITEC: uma só aparência, definida por escolha (marca) */
+:root {
+  --azul: #175FAA;
+  --claro: #F6F6F6;
+  --texto: #3D4F6B;
+  --destaque: #74D1EF;
+  --destaque-texto: #0944A1;
+  --sobre-azul: #E2EEFF;
+  --filete-azul: #4D85C2;
+  --filete-claro: #C9DAEE;
+  --fonte: 'Montserrat', system-ui, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--azul);
+  color: var(--claro);
+  font-family: var(--fonte);
+  font-weight: 400;
+  line-height: 1.55;
+  padding-block: 32px 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.pagina { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+h1 { font-size: 2rem; font-weight: 700; margin: 0; line-height: 1.2; text-wrap: balance; }
+.barra { width: 120px; height: 6px; border-radius: 3px; background: var(--destaque); margin-top: 12px; }
+.intro { color: var(--sobre-azul); margin: 16px 0 0; max-width: 62ch; }
+.aviso { font-size: 13px; color: var(--sobre-azul); margin: 8px 0 0; }
+
+/* Cartões claros: áreas de trabalho */
+.cartao { background: var(--claro); color: var(--texto); border-radius: 12px; padding: 20px; }
+.cartao h2 { color: var(--azul); font-size: 1.15rem; font-weight: 700; margin: 0 0 4px; }
+.cartao .sub { margin: 0 0 16px; font-size: 14px; }
+fieldset { border: 0; border-top: 1px solid var(--filete-claro); margin: 0; padding: 16px 0 4px; min-width: 0; }
+fieldset:first-of-type { border-top: 0; padding-top: 0; }
+legend { padding: 0; font-weight: 600; color: var(--azul); font-size: 15px; margin-bottom: 8px; }
+.dimensao-titulo { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--azul); margin: 20px 0 8px; }
+.dimensao-titulo:first-of-type { margin-top: 0; }
+.opcoes { display: grid; gap: 8px; margin-bottom: 12px; }
+.opcao { position: relative; }
+.opcao input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.opcao span {
+  display: block; padding: 10px 12px; border: 2px solid var(--filete-claro); border-radius: 8px;
+  font-size: 14px; background: #fff;
+}
+.opcao input:checked + span { border-color: var(--azul); background: var(--sobre-azul); font-weight: 600; }
+.opcao input:focus-visible + span { outline: 3px solid var(--destaque-texto); outline-offset: 2px; }
+
+/* Resultado em azul para o número em #74D1EF ter contraste */
+.resultado { display: flex; flex-direction: column; gap: 16px; }
+.pontuacao { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.numero { font-size: 5rem; font-weight: 800; color: var(--destaque); line-height: 1; font-variant-numeric: tabular-nums; }
+.numero small { font-size: 1.5rem; font-weight: 700; }
+.nivel { font-size: 1.25rem; font-weight: 700; }
+.leitura { color: var(--sobre-azul); margin: 0; max-width: 62ch; }
+.progresso { font-size: 13px; color: var(--sobre-azul); }
+.dims { display: grid; gap: 12px; }
+.dim-linha { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 14px; }
+.dim-linha b { font-variant-numeric: tabular-nums; }
+.pista { grid-column: 1 / -1; height: 10px; border-radius: 5px; background: var(--filete-azul); overflow: hidden; }
+.pista i { display: block; height: 100%; background: var(--destaque); border-radius: 5px; transition: width .3s; }
+
+.recs { display: grid; gap: 12px; }
+.rec { border: 1px solid var(--filete-claro); border-radius: 8px; padding: 14px; background: #fff; }
+.rec h3 { margin: 0 0 4px; font-size: 15px; color: var(--azul); }
+.rec p { margin: 0; font-size: 14px; }
+.etiqueta { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; margin-bottom: 6px; background: var(--destaque); color: var(--destaque-texto); }
+.etiqueta.media { background: var(--sobre-azul); color: var(--destaque-texto); }
+.etiqueta.baixa { background: var(--filete-claro); color: var(--texto); }
+
+.acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+button {
+  font-family: var(--fonte); font-weight: 600; font-size: 14px; border: 0; border-radius: 8px;
+  padding: 10px 16px; cursor: pointer; background: var(--destaque); color: var(--destaque-texto);
+}
+button.sec { background: transparent; color: var(--azul); border: 2px solid var(--azul); }
+button:focus-visible { outline: 3px solid var(--destaque-texto); outline-offset: 2px; }
+.estado { font-size: 13px; align-self: center; color: var(--sobre-azul); }
+button.claro { background: var(--sobre-azul); }
+[hidden] { display: none !important; }
+.vista { display: flex; flex-direction: column; gap: 24px; }
+.rodape { font-size: 12px; color: var(--sobre-azul); }
+
+@media (min-width: 640px) {
+  .opcoes { grid-template-columns: 1fr 1fr; }
+  .recs { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 639px) {
+  h1 { font-size: 1.6rem; }
+  .numero { font-size: 4rem; }
+}
+@media (prefers-reduced-motion: reduce) { .pista i { transition: none; } }
+</style>
+</head>
+<body>
+<main class="pagina">
+  <header>
+    <h1>Diagnóstico Digital PME</h1>
+    <div class="barra"></div>
+    <p class="intro">Responde a 12 perguntas sobre a tua empresa e recebe uma pontuação de maturidade digital com recomendações por onde começar. Feito para gerentes e equipas de pequenas e médias empresas.</p>
+    <p class="aviso">As respostas abaixo são um exemplo. Altera-as para refletir a tua empresa. Nada sai do teu navegador.</p>
+  </header>
+
+  <!-- Vista 1: questionário -->
+  <div id="vista-quiz" class="vista">
+    <section class="cartao" aria-labelledby="t-quiz">
+      <h2 id="t-quiz">Questionário</h2>
+      <p class="sub">Escolhe a frase que melhor descreve a situação atual.</p>
+      <form id="quiz" onsubmit="return false"></form>
+    </section>
+    <div class="acoes">
+      <button type="button" id="ver">Ver resultado</button>
+      <button type="button" id="exemplo" class="claro">Repor exemplo</button>
+      <button type="button" id="limpar" class="claro">Limpar respostas</button>
+      <span class="estado" id="contagem"></span>
+    </div>
+  </div>
+
+  <!-- Vista 2: avaliação (resultado e recomendações) -->
+  <div id="vista-resultado" class="vista" hidden>
+  <section class="resultado" aria-live="polite" aria-labelledby="t-res">
+    <h2 id="t-res" style="margin:0;font-size:1.15rem">O teu resultado</h2>
+    <div class="pontuacao">
+      <div class="numero"><span id="pontos">0</span><small>/100</small></div>
+      <div class="nivel" id="nivel"></div>
+    </div>
+    <p class="leitura" id="leitura"></p>
+    <div class="progresso" id="progresso"></div>
+    <div class="dims" id="dims"></div>
+  </section>
+
+  <section class="cartao" aria-labelledby="t-rec">
+    <h2 id="t-rec">Recomendações</h2>
+    <p class="sub">Ordenadas da área mais fraca para a mais forte.</p>
+    <div class="recs" id="recs"></div>
+  </section>
+
+  <div class="acoes">
+    <button type="button" id="copiar">Copiar resultado</button>
+    <button type="button" id="voltar" class="claro">Alterar respostas</button>
+    <span class="estado" id="estado" style="color:var(--sobre-azul)"></span>
+  </div>
+  </div>
+
+  <p class="rodape">Feito pela JUNITEC</p>
+</main>
+
+<script>
+/* ---------- Dados: dimensões, perguntas e recomendações ---------- */
+const DIMENSOES = [
+  { id: 'presenca', nome: 'Presença online' },
+  { id: 'processos', nome: 'Processos e ferramentas' },
+  { id: 'dados', nome: 'Dados e decisão' },
+  { id: 'pessoas', nome: 'Pessoas e segurança' }
+];
+
+// Cada pergunta tem 4 opções, da menos madura (0 pontos) à mais madura (3 pontos)
+const PERGUNTAS = [
+  { dim: 'presenca', texto: 'Como os clientes te encontram e contactam online?',
+    op: ['Não temos presença online', 'Temos só uma página de rede social', 'Temos site com contactos básicos', 'Temos site atualizado, com pesquisa e formulários que geram contactos'] },
+  { dim: 'presenca', texto: 'Como usas as redes sociais e o marketing digital?',
+    op: ['Não usamos', 'Publicamos de vez em quando, sem plano', 'Publicamos com regularidade', 'Temos plano de conteúdos e medimos os resultados'] },
+  { dim: 'presenca', texto: 'Podes vender ou receber pedidos e pagamentos online?',
+    op: ['Não, tudo é presencial ou por telefone', 'Recebemos pedidos por email ou mensagem', 'Temos pagamento ou reserva online simples', 'Temos canal de venda online integrado com o stock e a faturação'] },
+  { dim: 'processos', texto: 'Como geres faturação e contabilidade?',
+    op: ['Em papel ou folhas soltas', 'Em folhas de cálculo', 'Em software de faturação certificado', 'Em software integrado com a contabilidade e a banca'] },
+  { dim: 'processos', texto: 'Quanto do trabalho repetitivo está automatizado?',
+    op: ['Nada, é tudo manual', 'Alguma coisa, com modelos e atalhos', 'Várias tarefas automatizadas', 'Os processos principais estão automatizados e documentados'] },
+  { dim: 'processos', texto: 'Como a equipa partilha documentos e colabora?',
+    op: ['Por pen drive ou email', 'Numa pasta partilhada no computador', 'Numa plataforma na nuvem', 'Na nuvem, com permissões, versões e ferramentas de equipa'] },
+  { dim: 'dados', texto: 'Como guardas os dados dos clientes?',
+    op: ['Em papel ou de memória', 'Em contactos e folhas dispersas', 'Numa folha única ou ferramenta simples', 'Num CRM atualizado, usado por toda a equipa'] },
+  { dim: 'dados', texto: 'Acompanhas indicadores do negócio (vendas, margem, clientes)?',
+    op: ['Não acompanhamos', 'Só olhamos para as contas no fim do ano', 'Vemos alguns números todos os meses', 'Temos painel com indicadores e decidimos com base neles'] },
+  { dim: 'dados', texto: 'Fazes cópias de segurança dos dados da empresa?',
+    op: ['Nunca', 'Quando nos lembramos', 'Regularmente, mas só num local', 'Automáticas, em vários locais e testadas'] },
+  { dim: 'pessoas', texto: 'Que competências digitais tem a equipa?',
+    op: ['Muito básicas', 'Sabe usar as ferramentas do dia a dia', 'Tem formação em algumas ferramentas', 'Tem formação contínua e alguém responsável pelo digital'] },
+  { dim: 'pessoas', texto: 'Como proteges contas e dispositivos?',
+    op: ['Palavras-passe simples e partilhadas', 'Palavras-passe diferentes, sem mais proteção', 'Verificação em dois passos nas contas principais', 'Gestor de palavras-passe, verificação em dois passos e regras escritas'] },
+  { dim: 'pessoas', texto: 'Existe estratégia e orçamento para o digital?',
+    op: ['Não', 'Investimos quando surge a necessidade', 'Temos algumas prioridades definidas', 'Temos plano anual com orçamento e responsáveis'] }
+];
+
+const RECOMENDACOES = {
+  presenca: {
+    baixo: 'Cria já uma página simples com contactos, horário e serviços, e regista a empresa no Google Perfil de Empresa. É o passo com mais retorno e menos custo.',
+    medio: 'Melhora o site: textos claros, formulário de contacto e páginas por serviço. Escolhe uma rede social principal e publica com calendário fixo.',
+    alto: 'Mede de onde vêm os contactos e testa pequenas melhorias (textos, ofertas, formulários). Liga o canal online ao stock e à faturação.'
+  },
+  processos: {
+    baixo: 'Passa a faturação para software certificado e guarda os documentos numa pasta na nuvem. Escolhe só uma tarefa repetitiva para simplificar primeiro.',
+    medio: 'Junta as ferramentas num fluxo: faturação, contabilidade e gestão de tarefas. Documenta os 3 processos mais frequentes em passos curtos.',
+    alto: 'Automatiza ligações entre ferramentas e revê os processos a cada semestre. Mede o tempo poupado para justificar o próximo investimento.'
+  },
+  dados: {
+    baixo: 'Centraliza clientes numa única folha ou ferramenta simples e ativa cópias de segurança automáticas. Define 3 números para ver todos os meses.',
+    medio: 'Adota um CRM leve e cria um painel mensal com vendas, margem e novos clientes. Guarda cópias em dois locais e testa a recuperação.',
+    alto: 'Cruza dados de vendas, clientes e marketing para decidir preços e campanhas. Garante que o tratamento de dados cumpre o RGPD.'
+  },
+  pessoas: {
+    baixo: 'Ativa verificação em dois passos no email e na banca, e usa um gestor de palavras-passe. Marca uma formação curta em ferramentas básicas.',
+    medio: 'Escreve regras simples de segurança e escolhe um responsável pelo digital. Procura formação financiada para a equipa.',
+    alto: 'Cria um plano digital anual com orçamento e metas. Faz um simulacro de segurança e uma revisão de acessos todos os anos.'
+  }
+};
+
+// Exemplo preenchido, claramente marcado como exemplo (não são dados reais)
+const EXEMPLO = [2, 1, 1, 2, 1, 2, 1, 1, 1, 1, 2, 0];
+
+/* ---------- Estado ---------- */
+let respostas = EXEMPLO.slice(); // -1 significa sem resposta
+const LS_CHAVE = 'junitec-diagnostico-digital';
+
+/* ---------- Cálculo ---------- */
+function percentagem(soma, n) { return Math.round((soma / (n * 3)) * 100); }
+
+function calcular() {
+  const dims = DIMENSOES.map(d => {
+    const idx = PERGUNTAS.map((p, i) => p.dim === d.id ? i : -1).filter(i => i >= 0);
+    const soma = idx.reduce((s, i) => s + Math.max(respostas[i], 0), 0);
+    return { ...d, pct: percentagem(soma, idx.length) };
+  });
+  const total = percentagem(respostas.reduce((s, r) => s + Math.max(r, 0), 0), PERGUNTAS.length);
+  return { dims, total, respondidas: respostas.filter(r => r >= 0).length };
+}
+
+function classificar(total) {
+  if (total < 30) return { nome: 'Fase inicial', texto: 'A empresa ainda depende sobretudo de processos manuais. Há muito a ganhar com passos pequenos e baratos.' };
+  if (total < 55) return { nome: 'Em arranque', texto: 'Já há bases digitais, mas dispersas. Organizar e ligar o que existe traz ganhos rápidos.' };
+  if (total < 80) return { nome: 'Em evolução', texto: 'A empresa usa bem o digital em várias áreas. O próximo passo é medir resultados e fechar as lacunas.' };
+  return { nome: 'Avançada', texto: 'A empresa tem uma base digital sólida. Foca-te em otimizar, automatizar e manter a segurança.' };
+}
+
+function nivelDim(pct) { return pct < 40 ? 'baixo' : pct < 70 ? 'medio' : 'alto'; }
+
+/* ---------- Interface ---------- */
+function desenharQuiz() {
+  const form = document.getElementById('quiz');
+  let html = '';
+  let dimAtual = '';
+  PERGUNTAS.forEach((p, i) => {
+    if (p.dim !== dimAtual) {
+      dimAtual = p.dim;
+      html += `<div class="dimensao-titulo">${DIMENSOES.find(d => d.id === dimAtual).nome}</div>`;
+    }
+    html += `<fieldset><legend>${i + 1}. ${p.texto}</legend><div class="opcoes">`;
+    p.op.forEach((txt, k) => {
+      html += `<label class="opcao"><input type="radio" name="p${i}" value="${k}" ${respostas[i] === k ? 'checked' : ''}><span>${txt}</span></label>`;
+    });
+    html += '</div></fieldset>';
+  });
+  form.innerHTML = html;
+  // onchange (e não addEventListener) para não acumular ouvintes a cada redesenho
+  form.onchange = e => {
+    if (e.target.name && e.target.name[0] === 'p') {
+      respostas[Number(e.target.name.slice(1))] = Number(e.target.value);
+      guardar();
+      atualizarContagem();
+    }
+  };
+}
+
+function desenharResultado() {
+  const { dims, total, respondidas } = calcular();
+  const c = classificar(total);
+  document.getElementById('pontos').textContent = total;
+  document.getElementById('nivel').textContent = c.nome;
+  document.getElementById('leitura').textContent = c.texto;
+  document.getElementById('progresso').textContent = respondidas < PERGUNTAS.length
+    ? `Respondeste a ${respondidas} de ${PERGUNTAS.length} perguntas. As que faltam contam como 0 pontos.`
+    : 'Todas as perguntas respondidas.';
+
+  document.getElementById('dims').innerHTML = dims.map(d =>
+    `<div class="dim-linha"><span>${d.nome}</span><b>${d.pct}%</b><div class="pista"><i style="width:${d.pct}%"></i></div></div>`
+  ).join('');
+
+  const ordenadas = dims.slice().sort((a, b) => a.pct - b.pct);
+  const prioridades = ['Prioridade alta', 'Prioridade média', 'Prioridade média', 'Manter e melhorar'];
+  const classes = ['', 'media', 'media', 'baixa'];
+  document.getElementById('recs').innerHTML = ordenadas.map((d, i) =>
+    `<article class="rec"><span class="etiqueta ${classes[i]}">${prioridades[i]}</span><h3>${d.nome} · ${d.pct}%</h3><p>${RECOMENDACOES[d.id][nivelDim(d.pct)]}</p></article>`
+  ).join('');
+}
+
+/* ---------- Texto para copiar para um relatório ---------- */
+function textoResultado() {
+  const { dims, total } = calcular();
+  const c = classificar(total);
+  const linhas = [`Diagnóstico Digital PME: ${total}/100 (${c.nome})`, ''];
+  dims.forEach(d => linhas.push(`- ${d.nome}: ${d.pct}%`));
+  linhas.push('', 'Recomendações:');
+  dims.slice().sort((a, b) => a.pct - b.pct).forEach(d => linhas.push(`- ${d.nome}: ${RECOMENDACOES[d.id][nivelDim(d.pct)]}`));
+  return linhas.join('\n');
+}
+
+function mostrarEstado(msg) {
+  const el = document.getElementById('estado');
+  el.textContent = msg;
+  setTimeout(() => { el.textContent = ''; }, 2500);
+}
+
+async function copiar() {
+  const texto = textoResultado();
+  try {
+    await navigator.clipboard.writeText(texto);
+    mostrarEstado('Copiado.');
+  } catch (e) {
+    // Sem permissão para a área de transferência: seleciona o texto numa caixa temporária
+    const ta = document.createElement('textarea');
+    ta.value = texto;
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e2) {}
+    ta.remove();
+    mostrarEstado(ok ? 'Copiado.' : 'Não foi possível copiar.');
+  }
+}
+
+/* ---------- Persistência local (opcional) ---------- */
+function guardar() {
+  try { localStorage.setItem(LS_CHAVE, JSON.stringify(respostas)); } catch (e) {}
+}
+function carregar() {
+  try {
+    const v = JSON.parse(localStorage.getItem(LS_CHAVE));
+    if (Array.isArray(v) && v.length === PERGUNTAS.length) respostas = v;
+  } catch (e) {}
+}
+function definirRespostas(novas) {
+  respostas = novas.slice();
+  guardar();
+  document.getElementById('quiz').innerHTML = '';
+  desenharQuiz();
+  atualizarContagem();
+}
+
+/* ---------- Navegação entre vistas ---------- */
+// Separa o preenchimento da avaliação para o resultado ser lido sem distrações
+function mostrarVista(nome) {
+  document.getElementById('vista-quiz').hidden = nome !== 'quiz';
+  document.getElementById('vista-resultado').hidden = nome !== 'resultado';
+  window.scrollTo(0, 0);
+}
+
+function atualizarContagem() {
+  const n = respostas.filter(r => r >= 0).length;
+  document.getElementById('contagem').textContent = `${n} de ${PERGUNTAS.length} respondidas`;
+}
+
+document.getElementById('ver').addEventListener('click', () => { desenharResultado(); mostrarVista('resultado'); });
+document.getElementById('voltar').addEventListener('click', () => mostrarVista('quiz'));
+document.getElementById('copiar').addEventListener('click', copiar);
+document.getElementById('exemplo').addEventListener('click', () => definirRespostas(EXEMPLO));
+document.getElementById('limpar').addEventListener('click', () => definirRespostas(PERGUNTAS.map(() => -1)));
+
+carregar();
+desenharQuiz();
+atualizarContagem();
+</script>
+</body>
+</html>
