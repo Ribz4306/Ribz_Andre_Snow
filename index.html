@@ -101,6 +101,33 @@ button.claro { background: var(--sobre-azul); }
   .numero { font-size: 4rem; }
 }
 @media (prefers-reduced-motion: reduce) { .pista i { transition: none; } }
+
+/* Detalhes das respostas: só aparecem no PDF */
+.so-impressao { display: none; }
+.data-pdf { display: none; }
+.resp { padding: 8px 0; border-top: 1px solid var(--filete-claro); font-size: 13px; break-inside: avoid; }
+.resp:first-of-type { border-top: 0; }
+.resp b { color: var(--azul); }
+.resp p { margin: 2px 0 0; }
+
+/* Impressão / PDF: fundo branco, sem botões, cores que se leem em papel */
+@media print {
+  @page { margin: 14mm; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { background: #fff; color: var(--texto); padding: 0; }
+  .barra { background: var(--azul); }
+  h1, #t-res, .nivel { color: var(--azul); }
+  .intro, .aviso, .acoes, #vista-quiz { display: none !important; }
+  .data-pdf { display: block; font-size: 13px; color: var(--texto); margin: 8px 0 0; }
+  .numero { color: var(--azul); }
+  .leitura, .progresso, .rodape { color: var(--texto); }
+  .pista { background: var(--filete-claro); }
+  .pista i { background: var(--azul); }
+  .cartao { padding: 0; border-radius: 0; }
+  .so-impressao { display: block; }
+  .rec { break-inside: avoid; }
+  .recs { grid-template-columns: 1fr 1fr; }
+}
 </style>
 </head>
 <body>
@@ -110,6 +137,7 @@ button.claro { background: var(--sobre-azul); }
     <div class="barra"></div>
     <p class="intro">Responde a 12 perguntas sobre a tua empresa e recebe uma pontuação de maturidade digital com recomendações por onde começar. Feito para gerentes e equipas de pequenas e médias empresas.</p>
     <p class="aviso">As respostas abaixo são um exemplo. Altera-as para refletir a tua empresa. Nada sai do teu navegador.</p>
+    <p class="data-pdf" id="data-pdf"></p>
   </header>
 
   <!-- Vista 1: questionário -->
@@ -146,8 +174,14 @@ button.claro { background: var(--sobre-azul); }
     <div class="recs" id="recs"></div>
   </section>
 
+  <section class="cartao so-impressao" aria-labelledby="t-det">
+    <h2 id="t-det">Respostas dadas</h2>
+    <div id="detalhes"></div>
+  </section>
+
   <div class="acoes">
     <button type="button" id="copiar">Copiar resultado</button>
+    <button type="button" id="pdf">Exportar PDF</button>
     <button type="button" id="voltar" class="claro">Alterar respostas</button>
     <span class="estado" id="estado" style="color:var(--sobre-azul)"></span>
   </div>
@@ -292,6 +326,28 @@ function desenharResultado() {
   document.getElementById('recs').innerHTML = ordenadas.map((d, i) =>
     `<article class="rec"><span class="etiqueta ${classes[i]}">${prioridades[i]}</span><h3>${d.nome} · ${d.pct}%</h3><p>${RECOMENDACOES[d.id][nivelDim(d.pct)]}</p></article>`
   ).join('');
+
+  desenharDetalhes();
+}
+
+/* ---------- Detalhes das respostas (para o PDF) ---------- */
+function desenharDetalhes() {
+  document.getElementById('detalhes').innerHTML = PERGUNTAS.map((p, i) => {
+    const r = respostas[i];
+    const txt = r >= 0 ? `${p.op[r]} (${r}/3)` : 'Sem resposta (0/3)';
+    return `<div class="resp"><b>${i + 1}. ${p.texto}</b><p>${txt}</p></div>`;
+  }).join('');
+}
+
+/* ---------- Exportar PDF ---------- */
+// Usa a impressão do navegador: escolher "Guardar como PDF" no destino
+function exportarPdf() {
+  const hoje = new Date().toISOString().slice(0, 10);
+  document.getElementById('data-pdf').textContent = `Relatório gerado a ${hoje}`;
+  const tituloOriginal = document.title;
+  document.title = `Diagnostico-Digital-PME-${hoje}`; // nome sugerido para o ficheiro
+  window.print();
+  document.title = tituloOriginal;
 }
 
 /* ---------- Texto para copiar para um relatório ---------- */
@@ -363,6 +419,7 @@ function atualizarContagem() {
 document.getElementById('ver').addEventListener('click', () => { desenharResultado(); mostrarVista('resultado'); });
 document.getElementById('voltar').addEventListener('click', () => mostrarVista('quiz'));
 document.getElementById('copiar').addEventListener('click', copiar);
+document.getElementById('pdf').addEventListener('click', exportarPdf);
 document.getElementById('exemplo').addEventListener('click', () => definirRespostas(EXEMPLO));
 document.getElementById('limpar').addEventListener('click', () => definirRespostas(PERGUNTAS.map(() => -1)));
 
